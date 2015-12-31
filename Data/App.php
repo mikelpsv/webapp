@@ -4,11 +4,11 @@
 
 class App
 {
-    public $debug_text;
-    public $Db;
-    public $cUser;
-    // Массив $_SERVER['REQUEST_URI']
-    public $__request_uri;
+
+    private $debug_text;
+    private $Db;
+    private $User;
+    private $__request_uri;
     // Корень приложения (где располагается index.php)
     public $__doc_root;
     public $__headers;
@@ -23,6 +23,8 @@ class App
     public $__rcontroller;
     public $__raction;
     public $__rsubaction;
+
+    private $style;
 
     public $layout;
 
@@ -40,24 +42,30 @@ class App
 
         session_start();
 
-        $this->__response = '';
-        $this->__data = array();
-        $this->__actions = array();
-        $this->__map = array();
-        $this->__langs = array('ru' => '', 'en' => '');
+        $this->__response 	= '';
+        $this->__data 		= array();
+        $this->__actions 	= array();
+        $this->__map 		= array();
+        $this->__langs 		= array('ru' => '', 'en' => '');
 
         // Загрузка конфигурационного файла
-        $this->loadConfig();
+        
+        if (!GL_CLASS_AUTOLOAD) {
+	    require_once classPath('Config');
+        }
+	$this->config = new Config();
+	$this->config->loadConfig();
+
 
         $this->parseRequest();
 
-
-
-        setlocale(LC_ALL, $this->config['locale']);
+        setlocale(LC_ALL, $this->config->locale);
         $this->Headers('Content-type', 'text/html; charset=utf-8');
 
-        /*common.php*/
-       // $this->cUser = new User($_SESSION);
+        if (!GL_CLASS_AUTOLOAD) {
+	    require_once classPath('User');
+        }
+        $this->User = new User($_SESSION);
     }
 
     public function parseRequest()
@@ -70,14 +78,14 @@ class App
 
 	// Убираем каталоги установки, если разместили не в корне
         $__request_uri 	= explode('/', trim($_SERVER['REQUEST_URI'], '/'));
-	$__base_setup 	= explode('/', trim($this->config['base_setup'], '/'));
+	$__base_setup 	= explode('/', trim($this->config->base_setup, '/'));
 	
 	foreach($__base_setup as $k=>$v){
 		if($__request_uri[$k] == $v){
 			array_shift($__request_uri);
 		}
 	}
-	// Проверяем указание языка
+	// Проверяем указание языка, если есть
 	if (isset($this->__langs[$__request_uri[0]])) {
 		$this->__rlang = $__request_uri[0];
 		array_shift($__request_uri);
@@ -111,7 +119,11 @@ class App
 
     public function User()
     {
-        return $this->cUser;
+        return $this->User;
+    }
+
+    public function Config(){
+	return $this->config;
     }
 
     public function getFileController()
@@ -276,10 +288,11 @@ class App
     */
     private function loadConfig()
     {
-        $file = DOC_ROOT . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . ENVIRONMENT . '.php';
+      /*
+	$file = DOC_ROOT . DIRECTORY_SEPARATOR . 'Config' . DIRECTORY_SEPARATOR . ENVIRONMENT . '.php';
         if (file_exists($file)) {
             $this->config = include_once($file);
-        }
+        } */
     }
 
     /**
