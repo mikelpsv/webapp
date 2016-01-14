@@ -1,5 +1,6 @@
 <?php
 
+
 error_reporting(E_ALL);
 
 if(ini_get('register_globals') == 'on') ini_set('register_globals', 'off');
